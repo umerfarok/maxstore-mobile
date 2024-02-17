@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Button } from 'react-native';
+import { View, Text, StyleSheet, Button, ActivityIndicator } from 'react-native';
 import { useQuery, gql } from '@apollo/client';
 
 const GET_PRODUCTS = gql`
@@ -27,7 +27,7 @@ const DemoComponent = () => {
     setSkip(skip - 10 < 0 ? 0 : skip - 10);
   };
 
-  if (loading) return <Text>Loading...</Text>;
+  if (loading) return <ActivityIndicator size="large" color="#0000ff" />;
   if (error) return <Text>Error :(</Text>;
 
   return (
