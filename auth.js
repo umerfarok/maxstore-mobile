@@ -11,7 +11,7 @@ const Auth = () => {
     issuer: 'http://localhost:8080/realms/maxstore',
     clientId: 'maxstore-client',
     scopes: ['openid', 'profile'],
-    redirectUri: 'http://localhost:8081/', // Update this to match your Expo web server address
+    redirectUri: 'http://localhost:8081/', 
   };
 
   const discovery = AuthSession.useAutoDiscovery(config.issuer);
