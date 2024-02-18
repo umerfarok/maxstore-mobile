@@ -1,44 +1,51 @@
-import React, { useEffect, useState } from 'react';
-import { Button, View } from 'react-native';
-import * as AuthSession from 'expo-auth-session';
+import * as React from 'react';
+import * as WebBrowser from 'expo-web-browser';
+import { makeRedirectUri, useAuthRequest, useAutoDiscovery } from 'expo-auth-session';
+import { Button, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
+WebBrowser.maybeCompleteAuthSession();
+
 function Home() {
-  const [authState, setAuthState] = useState(null);
   const navigation = useNavigation();
+  const discovery = useAutoDiscovery('http://10.0.2.2:8080/realms/maxstore');
 
-  const config = {
-    issuer: 'http://localhost:8080/realms/maxstore',
-    clientId: 'maxstore-client',
-    scopes: ['openid', 'profile'],
-    redirectUri: 'http://localhost:8081/', // Update this to match your Expo web server address
-  };
+  if (!discovery) {
+    console.error('Discovery document not loaded');
+  } else {
+    console.log('Discovery document loaded');
+  }
 
-  const discovery = AuthSession.useAutoDiscovery(config.issuer);
+  const [request, result, promptAsync] = useAuthRequest(
+    {
+      clientId: 'maxstore-client',
+      redirectUri: makeRedirectUri({
+        useProxy: false
+      }),
+      scopes: ['openid', 'profile', 'email', 'offline_access'],
+    },
+    discovery
+  );
 
-  const login = async () => {
-    const request = new AuthSession.AuthRequest(config);
-    const result = await request.promptAsync(discovery);
-    if (result.type === 'success') {
-      setAuthState(result.params);
+  if (!request) {
+    console.error('You are notLogged In');
+  } else {
+    console.log('Auth request loaded');
+  }
+
+  const handleLogin = async () => {
+    try {
+      await promptAsync();
+      console.log('Login initiated');
+    } catch (error) {
+      console.error('Login failed:', error);
     }
   };
-
-  const logout = () => {
-    setAuthState(null);
-  };
-
-  useEffect(() => {
-    if (authState) {
-      console.log('Logged in!');
-      navigation.navigate('Home');
-    }
-  }, [authState]);
 
   return (
     <View>
       <Button
-        title="Go to Product Details"
+        title="Go to Product Details home"
         onPress={() => navigation.navigate('ProductDetails')}
       />
       <Button
@@ -49,11 +56,9 @@ function Home() {
         title="Go to Checkout"
         onPress={() => navigation.navigate('Checkout')}
       />
-      {authState ? (
-        <Button title="Log out" onPress={logout} />
-      ) : (
-        <Button title="Log in" onPress={login} />
-      )}
+      <Button title="Go to UserLogin" onPress={() => navigation.navigate('UserLogin')} />
+      <Button title="Login!" disabled={!request} onPress={handleLogin} />
+      {result && <Text>{JSON.stringify(result, null, 2)}</Text>}
     </View>
   );
 }

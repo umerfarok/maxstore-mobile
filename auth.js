@@ -1,49 +1,49 @@
-import React, { useEffect, useState } from 'react';
-import { Button, View } from 'react-native';
-import * as AuthSession from 'expo-auth-session';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState } from 'react';
+import { Button, TextInput, View } from 'react-native';
 
-const Auth = () => {
-  const [authState, setAuthState] = useState(null);
-  const navigation = useNavigation();
+function Login() {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
 
-  const config = {
-    issuer: 'http://localhost:8080/realms/maxstore',
-    clientId: 'maxstore-client',
-    scopes: ['openid', 'profile'],
-    redirectUri: 'http://localhost:8081/', 
-  };
+  const handleLogin = async () => {
+    try {
+      const response = await fetch('http://10.0.2.2:8080/realms/maxstore/protocol/openid-connect/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&grant_type=password&client_id=maxstore-client`,
+      });
 
-  const discovery = AuthSession.useAutoDiscovery(config.issuer);
+      const data = await response.json();
 
-  const login = async () => {
-    const request = new AuthSession.AuthRequest(config);
-    const result = await request.promptAsync(discovery);
-    if (result.type === 'success') {
-      setAuthState(result.params);
+      if (response.ok) {
+        console.log('Access token:', data.access_token);
+      } else {
+        console.error('Login failed:', data);
+        console.error('Response:', response);
+      }
+    } catch (error) {
+      console.error('Network error:', error);
     }
   };
-
-  const logout = () => {
-    setAuthState(null);
-  };
-
-  useEffect(() => {
-    if (authState) {
-      console.log('Logged in!');
-      navigation.navigate('Home');
-    }
-  }, [authState]);
 
   return (
     <View>
-      {authState ? (
-        <Button title="Log out" onPress={logout} />
-      ) : (
-        <Button title="Log in" onPress={login} />
-      )}
+      <TextInput
+        placeholder="Username"
+        value={username}
+        onChangeText={setUsername}
+      />
+      <TextInput
+        placeholder="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
+      <Button title="Login" onPress={handleLogin} />
     </View>
   );
-};
+}
 
-export default Auth;
+export default Login;
